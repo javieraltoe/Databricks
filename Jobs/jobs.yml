@@ -1,0 +1,48 @@
+resources:
+  jobs:
+    PROPIEDADES_MEDALLION:
+      name: PROPIEDADES_MEDALLION
+      schedule:
+        quartz_cron_expression: 49 15 12 * * ?
+        timezone_id: America/Buenos_Aires
+        pause_status: PAUSED
+      tasks:
+        - task_key: PROPIEDADES_BRONZE
+          notebook_task:
+            notebook_path: /Workspace/Users/javier.altoe@gmail.com/ETL/BRONCE-PROPIEDADES_ROW
+            source: WORKSPACE
+        - task_key: Validacion_Bronze
+          depends_on:
+            - task_key: PROPIEDADES_BRONZE
+          notebook_task:
+            notebook_path: /Workspace/Users/javier.altoe@gmail.com/ETL/Validacion Generica
+            base_parameters:
+              table_name: workspace.javier_altoe.propiedades_bronze
+              min_count: "100"
+              col_not_null: metros_cuadrados_totales
+            source: WORKSPACE
+        - task_key: PROPIEDADES_SILVER
+          depends_on:
+            - task_key: Validacion_Bronze
+          notebook_task:
+            notebook_path: /Workspace/Users/javier.altoe@gmail.com/ETL/SILVER-PROPIEDADES_ROW
+            source: WORKSPACE
+        - task_key: Validacion_Silver
+          depends_on:
+            - task_key: PROPIEDADES_SILVER
+          notebook_task:
+            notebook_path: /Workspace/Users/javier.altoe@gmail.com/ETL/Validacion Generica
+            base_parameters:
+              table_name: workspace.javier_altoe.propiedades_silver
+              min_count: "100"
+              col_not_null: metros_cubiertos
+            source: WORKSPACE
+        - task_key: PROPIEDADES_GOLD
+          depends_on:
+            - task_key: Validacion_Silver
+          notebook_task:
+            notebook_path: /Workspace/Users/javier.altoe@gmail.com/ETL/GOLD-PROPIEDADES_ROW
+            source: WORKSPACE
+      queue:
+        enabled: true
+      performance_target: PERFORMANCE_OPTIMIZED
